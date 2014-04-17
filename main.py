@@ -16,45 +16,47 @@
 #
 import webapp2
 import models
-from google.appengine.ext import db
+from google.appengine.ext.webapp import template
+from google.appengine.api import images
+# from google.appengine.ext import db
 
 class MainHandler(webapp2.RequestHandler):
-
     def get(self):
-		#request = Request.blank('/test?check=a&check=b&name=Bob')
-
-
         self.post()
-
-		# get_values = request.GET
-		# self.response.write(get_values)
-		# self.response.write(name)
     def post(self):
         running = self.request.get('running')
-        if running == "true":
+        if running == "true" or running == "shaking":
          	runner = models.Running(running="True")
         	runner.put()
         	self.response.write("Just received a true get!")
-        elif running == "false":
+        elif running == "false" or running == "still":
         	runner = models.Running(running="False")
         	runner.put()
         	self.response.write("Just received a false get!")
         else:
-
             run_db = models.Running.all()
             run_db.order('-time')
+            html_txt = """
+            <html> 
+                <body>
+                    There is %s someone using the treadmill
+                    <p style="text-align:center">
+                        <img title="logo"  src="in_use.jpg" />
+                            hi ther 
+                        </img>
+                    </p> 
+                </body>
+            </html>"""
             for r in run_db.run(limit=1):
                 if(r.running == "True"):
-                    self.response.write("The treadmill is currently occupied.")
+                    self.response.write(html_txt % "")
                 elif(r.running == "False"):
-                    self.response.write("The treadmill is not currently occupied.")
+                    self.response.write(html_txt % "not")
                 else:
                     self.response.write("uh oh. not true or false")
 
 
-#run = db.GqlQuery("SELECT * FROM RUNNING")
-
-
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/img', Image)
 ], debug=True)
