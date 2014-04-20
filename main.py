@@ -19,6 +19,7 @@ import models
 import urllib
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
+import send_sms
 # from google.appengine.ext import db
 
 class MainHandler(webapp2.RequestHandler):
@@ -57,6 +58,17 @@ class MainHandler(webapp2.RequestHandler):
                 else:
                     self.response.write("uh oh. not true or false")
 
+class TextHandler(webapp2.RequestHandler):
+    def get(self):
+        run_db = models.Running.all()
+        run_db.order('-time')
+        for r in run_db.run(limit=1):
+            if(r.running == "True"):
+                send_sms.send_a_text(True)
+            elif(r.running == "False"):
+                send_sms.send_a_text(False)
+
+
 class UploadForm(webapp2.RequestHandler):
   def get(self):
     upload_url = blobstore.create_upload_url('/ready-for-upload')
@@ -81,6 +93,7 @@ class ServeHandler(blobstore_handlers.BlobstoreDownloadHandler):
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
+    ('/text', TextHandler),
     ('/upload', UploadForm),
     ('/ready-for-upload', UploadHandler),
     ('/serve/([^/]+)?', ServeHandler)
