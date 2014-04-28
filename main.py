@@ -17,6 +17,7 @@
 import webapp2
 import models
 import urllib
+from html import html_text
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 import send_sms
@@ -38,35 +39,29 @@ class MainHandler(webapp2.RequestHandler):
         else:
             run_db = models.Running.all()
             run_db.order('-time')
-            html_txt = """
-            <html> 
-                <body>
-                    There is %s someone using the treadmill
-                    <p style="text-align:center">
-                        <img title="logo"  src=%r />
-                        </img>
-                    </p> 
-                </body>
-            </html>"""
+
             for r in run_db.run(limit=1):
                 if(r.running == "True"):
-                    self.response.write(html_txt % ("",
-                        "/serve/AMIfv96q4lsf7RIZPVtoH6P-dDqzLG_7yF0agkecoKKc4gwZYctt6EQ199ffN0HBJ5aIe6CHIsV9uoKXD_MOyo9OeZF3Krqd4jcT_p7xevqxooKIJPxxZJ53PN7Ppmd-9PJzoMb_WXPWd5jlWFxodXMP46UVMa-tmA"))
+                    self.response.write(html_text % ("",
+                        "/serve/AMIfv95K9jJGs5U_TvAyJrnTf5X7SBYx2fF3LDE3ZWTlsc18g6odPnlaXh0LKHLjaRRM44S47KjHJqPaDnyyemlbL-2g2usnQOdCT5FI8mWboWylte7yQLXYlQBSJVp3CtJVnSZQrLGjKtH0xyTPCuXK1qfoG_B1Zg"))
                 elif(r.running == "False"):
-                    self.response.write(html_txt % ("not",
-                        "serve/AMIfv94lTNQ7v8_IjtZ897dL-xAIu1tACMFZtGL3A2zWjO2xsRn-HsB8UnvIB-aOEbpqJH6k7S1nLaLRBuh1YJutURcxziJM9-awgjGaWpQSFIsH_zQN6xwJ_6mlSbQa0wcVCBhgk94eKpe2OmkxmuqnBJvw78EOMQ"))
+                    self.response.write(html_text % ("not",
+                        "serve/AMIfv96DQ3LFuNou7fDSVpP2nSvC1OhJcDd7lhyV_0Lo6bMcjoZW8AYKaSu5zkqWVKXb_P3hYjjDr_yIUmGjXcxjRIXinkSKr3euHteatQAKHuPRlC_sFHUXqflVt0cKWsDMqKUB2d-vX41b6RWfsisQ6VdyDqlO_g"))
                 else:
                     self.response.write("uh oh. not true or false")
 
 class TextHandler(webapp2.RequestHandler):
     def get(self):
-        run_db = models.Running.all()
-        run_db.order('-time')
-        for r in run_db.run(limit=1):
-            if(r.running == "True"):
-                send_sms.send_a_text(True)
-            elif(r.running == "False"):
-                send_sms.send_a_text(False)
+        body = self.request.get('Body')
+        sender = self.request.get('From')
+        if(body == "Treadmill"):
+            run_db = models.Running.all()
+            run_db.order('-time')
+            for r in run_db.run(limit=1):
+                send_sms.send_treadmill_status(r.running, sender)
+        else:
+            send_sms.send_invalid(sender)
+
 
 
 class UploadForm(webapp2.RequestHandler):
