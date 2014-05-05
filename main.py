@@ -20,6 +20,8 @@ import urllib
 from html import html_text
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
+from account import green_image
+from account import red_image
 import send_sms
 # from google.appengine.ext import db
 
@@ -42,11 +44,9 @@ class MainHandler(webapp2.RequestHandler):
 
             for r in run_db.run(limit=1):
                 if(r.running == "True"):
-                    self.response.write(html_text % ("",
-                        "/serve/AMIfv95K9jJGs5U_TvAyJrnTf5X7SBYx2fF3LDE3ZWTlsc18g6odPnlaXh0LKHLjaRRM44S47KjHJqPaDnyyemlbL-2g2usnQOdCT5FI8mWboWylte7yQLXYlQBSJVp3CtJVnSZQrLGjKtH0xyTPCuXK1qfoG_B1Zg"))
+                    self.response.write(html_text % ("",red_image))
                 elif(r.running == "False"):
-                    self.response.write(html_text % ("not",
-                        "serve/AMIfv96DQ3LFuNou7fDSVpP2nSvC1OhJcDd7lhyV_0Lo6bMcjoZW8AYKaSu5zkqWVKXb_P3hYjjDr_yIUmGjXcxjRIXinkSKr3euHteatQAKHuPRlC_sFHUXqflVt0cKWsDMqKUB2d-vX41b6RWfsisQ6VdyDqlO_g"))
+                    self.response.write(html_text % ("not",green_image))
                 else:
                     self.response.write("uh oh. not true or false")
 
@@ -58,7 +58,10 @@ class TextHandler(webapp2.RequestHandler):
             run_db = models.Running.all()
             run_db.order('-time')
             for r in run_db.run(limit=1):
-                send_sms.send_treadmill_status(r.running, sender)
+                if(r.running == "True"):
+                    send_sms.send_treadmill_status(True, sender)
+                else:
+                    send_sms.send_treadmill_status(False, sender)
         else:
             send_sms.send_invalid(sender)
 
